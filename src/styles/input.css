@@ -1,0 +1,68 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* HTMX request indicator. Defined here because htmx's own injected styles are
+   disabled: an inline <style> tag would be blocked by the CSP. */
+@layer components {
+  .htmx-indicator {
+    opacity: 0;
+    transition: opacity 150ms ease-in;
+  }
+  .htmx-request .htmx-indicator,
+  .htmx-request.htmx-indicator {
+    opacity: 1;
+  }
+  .htmx-request.btn {
+    pointer-events: none;
+    opacity: 0.6;
+  }
+
+  /* The form panel. Below 1024px it is an off-canvas sheet opened by the
+     hamburger; from 1024px up it is a plain block under the header, so the
+     page reads header, form, cards. The checkbox drives it through sibling
+     selectors, which keeps the whole thing working without JavaScript. */
+  .sheet-toggle {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  #sheet-backdrop {
+    display: none;
+  }
+
+  @media (max-width: 1023.98px) {
+    #form-panel {
+      position: fixed;
+      /* Starts below the sticky navbar so the header stays readable and the
+         sheet's own Close row is not hidden behind it. */
+      top: 4rem;
+      bottom: 0;
+      left: 0;
+      z-index: 30;
+      width: min(22rem, 88vw);
+      overflow-y: auto;
+      transform: translateX(-100%);
+      transition: transform 200ms ease-out;
+    }
+    .sheet-toggle:checked ~ #form-panel {
+      transform: translateX(0);
+    }
+    .sheet-toggle:checked ~ #sheet-backdrop {
+      display: block;
+      position: fixed;
+      inset: 4rem 0 0 0;
+      z-index: 20;
+      background-color: rgb(0 0 0 / 0.5);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    #form-panel {
+      transition: none;
+    }
+  }
+}
