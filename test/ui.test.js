@@ -42,7 +42,7 @@ function createForm(overrides = {}) {
 
 describe('POST /ui/targets', () => {
   it('creates a target and returns the refreshed list', async () => {
-    const res = await request(app).post('/ui/targets').type('form').send(createForm()).expect(200);
+    const res = await request(app).post('/ui/targets').set('HX-Request', 'true').type('form').send(createForm()).expect(200);
 
     expect(res.text).toContain('health');
     expect(res.text).toContain('every 30s');
@@ -52,9 +52,14 @@ describe('POST /ui/targets', () => {
     expect(await listTargets()).toHaveLength(1);
   });
 
+  it('refuses a form post without the HX-Request header', async () => {
+    await request(app).post('/ui/targets').type('form').send(createForm()).expect(403);
+    expect(await listTargets()).toHaveLength(0);
+  });
+
   it('reports a bad header line without creating the target', async () => {
     const res = await request(app)
-      .post('/ui/targets')
+      .post('/ui/targets').set('HX-Request', 'true')
       .type('form')
       .send(createForm({ headers: 'not-a-header-line' }))
       .expect(200);
@@ -65,7 +70,7 @@ describe('POST /ui/targets', () => {
 
   it('reports a blocked URL without creating the target', async () => {
     const res = await request(app)
-      .post('/ui/targets')
+      .post('/ui/targets').set('HX-Request', 'true')
       .type('form')
       .send(createForm({ url: 'http://127.0.0.1:8080/' }))
       .expect(200);
@@ -76,7 +81,7 @@ describe('POST /ui/targets', () => {
 
   it('escapes HTML in a target name', async () => {
     await request(app)
-      .post('/ui/targets')
+      .post('/ui/targets').set('HX-Request', 'true')
       .type('form')
       .send(createForm({ name: '<img src=x onerror=alert(1)>' }))
       .expect(200);
@@ -89,11 +94,11 @@ describe('POST /ui/targets', () => {
 
 describe('PUT /ui/targets/:id', () => {
   it('keeps stored headers when the headers box is left empty', async () => {
-    await request(app).post('/ui/targets').type('form').send(createForm()).expect(200);
+    await request(app).post('/ui/targets').set('HX-Request', 'true').type('form').send(createForm()).expect(200);
     const { id } = await onlyTarget();
 
     await request(app)
-      .put(`/ui/targets/${id}`)
+      .put(`/ui/targets/${id}`).set('HX-Request', 'true')
       .type('form')
       .send(createForm({ name: 'renamed', headers: '' }))
       .expect(200);
@@ -104,11 +109,11 @@ describe('PUT /ui/targets/:id', () => {
   });
 
   it('removes stored headers when the clear box is ticked', async () => {
-    await request(app).post('/ui/targets').type('form').send(createForm()).expect(200);
+    await request(app).post('/ui/targets').set('HX-Request', 'true').type('form').send(createForm()).expect(200);
     const { id } = await onlyTarget();
 
     await request(app)
-      .put(`/ui/targets/${id}`)
+      .put(`/ui/targets/${id}`).set('HX-Request', 'true')
       .type('form')
       .send(createForm({ headers: '', clearHeaders: 'true' }))
       .expect(200);
@@ -119,13 +124,13 @@ describe('PUT /ui/targets/:id', () => {
 
 describe('POST /ui/targets/:id/toggle', () => {
   it('flips the enabled flag', async () => {
-    await request(app).post('/ui/targets').type('form').send(createForm()).expect(200);
+    await request(app).post('/ui/targets').set('HX-Request', 'true').type('form').send(createForm()).expect(200);
     const { id } = await onlyTarget();
 
-    await request(app).post(`/ui/targets/${id}/toggle`).expect(200);
+    await request(app).post(`/ui/targets/${id}/toggle`).set('HX-Request', 'true').expect(200);
     expect((await onlyTarget()).enabled).toBe(false);
 
-    await request(app).post(`/ui/targets/${id}/toggle`).expect(200);
+    await request(app).post(`/ui/targets/${id}/toggle`).set('HX-Request', 'true').expect(200);
     expect((await onlyTarget()).enabled).toBe(true);
   });
 });
@@ -133,7 +138,7 @@ describe('POST /ui/targets/:id/toggle', () => {
 describe('GET /ui/form/:id', () => {
   it('renders an edit form without leaking stored header values', async () => {
     await request(app)
-      .post('/ui/targets')
+      .post('/ui/targets').set('HX-Request', 'true')
       .type('form')
       .send(createForm({ headers: 'Authorization: Bearer secret-token' }))
       .expect(200);

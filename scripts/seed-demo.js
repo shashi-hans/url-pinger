@@ -7,11 +7,13 @@
 // Usage: npm run seed:demo            (against http://127.0.0.1:3200)
 //        BASE_URL=... npm run seed:demo
 //        npm run seed:demo -- --reset (delete existing targets first)
+//        ACCESS_TOKEN=... npm run seed:demo (Supabase mode: a user's access token)
 //
 // Every URL below is a public test endpoint. No customer data, no credentials.
 
 const BASE_URL = process.env.BASE_URL || 'http://127.0.0.1:3200';
 const reset = process.argv.includes('--reset');
+const auth = process.env.ACCESS_TOKEN ? { Authorization: `Bearer ${process.env.ACCESS_TOKEN}` } : {};
 
 const demoTargets = [
   { name: 'Example Domain', url: 'https://example.com/', intervalSeconds: 60 },
@@ -51,7 +53,7 @@ const demoTargets = [
 async function api(path, options = {}) {
   const res = await fetch(`${BASE_URL}${path}`, {
     ...options,
-    headers: { 'content-type': 'application/json', ...(options.headers || {}) },
+    headers: { 'content-type': 'application/json', ...auth, ...(options.headers || {}) },
   });
   const text = await res.text();
   const body = text ? JSON.parse(text) : null;
