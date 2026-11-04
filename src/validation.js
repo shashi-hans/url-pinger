@@ -1,6 +1,7 @@
 'use strict';
 
 const config = require('./config');
+const { normalizeTime } = require('./availability');
 
 const HTTP_METHODS = ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'HEAD', 'OPTIONS'];
 const BODYLESS_METHODS = ['GET', 'HEAD'];
@@ -159,6 +160,34 @@ function validateTargetInput(input, { partial = false } = {}) {
     const n = Number(input.expectStatus);
     if (!Number.isInteger(n) || n < 100 || n > 599) {
       errors.push('expectStatus must be an HTTP status code between 100 and 599');
+    }
+  }
+
+  // Online window: both times, as "HH:MM" or "h:mm AM/PM" (IST), or both
+  // null for always online. They are sent together so a patch cannot leave
+  // half a window.
+  if (has('onlineFrom') || has('onlineTo')) {
+    const from = input.onlineFrom ?? null;
+    const to = input.onlineTo ?? null;
+    if (!has('onlineFrom') || !has('onlineTo')) {
+      errors.push('onlineFrom and onlineTo must be sent together');
+    } else if ((from === null) !== (to === null)) {
+      errors.push('set both online times, or clear both');
+    } else if (from !== null && (normalizeTime(from) === null || normalizeTime(to) === null)) {
+      errors.push('online times must be like 09:00 or 9:00 AM');
+    } else if (from !== null && normalizeTime(from) === normalizeTime(to)) {
+      errors.push('online start and end must differ');
+    }
+  }
+
+  if (has('offlineDays') && input.offlineDays != null) {
+    const days = input.offlineDays;
+    if (!Array.isArray(days) || !days.every((d) => Number.isInteger(d) && d >= 0 && d <= 6)) {
+      errors.push('offlineDays must be a list of weekday numbers, 0 (Sunday) to 6 (Saturday)');
+    } else if (new Set(days).size !== days.length) {
+      errors.push('offlineDays must not repeat a day');
+    } else if (days.length === 7) {
+      errors.push('offlineDays cannot cover every day; pause the target instead');
     }
   }
 

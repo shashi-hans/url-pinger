@@ -192,6 +192,20 @@ describe('GET /api/targets/:id/history', () => {
     // One automatic hit on create, plus the two run-now calls.
     expect(res.body.history).toHaveLength(3);
     expect(new Date(res.body.history[0].at) >= new Date(res.body.history[1].at)).toBe(true);
+    expect(res.body).toMatchObject({ total: 3, page: 1, pages: 1, windowHours: 24 });
+  });
+
+  it('pages the history with page and pageSize', async () => {
+    vi.stubGlobal('fetch', vi.fn(async () => new Response('', { status: 200 })));
+    const created = await request(app).post('/api/targets').send(base).expect(201);
+    await request(app).post(`/api/targets/${created.body.id}/run`).expect(200);
+    await request(app).post(`/api/targets/${created.body.id}/run`).expect(200);
+
+    const res = await request(app)
+      .get(`/api/targets/${created.body.id}/history?page=2&pageSize=2`)
+      .expect(200);
+    expect(res.body.history).toHaveLength(1);
+    expect(res.body).toMatchObject({ total: 3, page: 2, pageSize: 2, pages: 2 });
   });
 });
 

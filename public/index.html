@@ -30,6 +30,8 @@
         </span>
       </div>
 
+      <div hx-get="/ui/me" hx-trigger="load" hx-swap="outerHTML"></div>
+
       <label class="btn btn-sm btn-ghost gap-2" for="theme-toggle">
         <input id="theme-toggle" class="toggle toggle-sm" type="checkbox" />
         <span id="theme-label">Dark</span>
@@ -57,7 +59,7 @@
       <section class="flex flex-col gap-3">
         <h2 class="font-semibold text-lg">Targets</h2>
         <div id="target-list" class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4"
-          hx-get="/ui/targets" hx-trigger="load, every 5s" hx-swap="innerHTML">
+          hx-get="/ui/targets" hx-trigger="load, every 300s" hx-swap="innerHTML">
           <p class="opacity-60 text-sm">Loading…</p>
         </div>
       </section>
@@ -65,8 +67,8 @@
       <section id="detail"></section>
 
       <footer class="text-xs opacity-60">
-        History is kept in memory only and resets when the server restarts.
-        Targets and intervals are saved to disk.
+        Targets are saved to storage. With Supabase, hits are kept for a
+        limited number of days and response previews stay in memory only.
       </footer>
     </main>
   </body>
